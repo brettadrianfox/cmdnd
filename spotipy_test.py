@@ -7,13 +7,12 @@ def main():
     auth_manager = SpotifyClientCredentials(client_id=os.environ.get("SPOTIPY_CLIENT_ID"), client_secret=os.environ.get("SPOTIPY_CLIENT_SECRET"))
     sp = spotipy.Spotify(auth_manager=auth_manager)
 
-    playlists = sp.user_playlists('sirpopey')
+    playlists = sp.user_playlists(os.environ.get("SPOTIFY_USERNAME"))
     playlist_dict = {}
     while playlists:
         for i, playlist in enumerate(playlists['items']):
             print(playlist['name']) # TEMP
-            print(playlist['uri'])
-            pattern_1 = r"(?<=(:\s))[a-zA-Z0-9]{1,5}" # This regex pattern captures 5 alphanumeric characters after a colon and space
+            pattern_1 = r"(?<=(RPG:\s))[a-zA-Z0-9]{1,5}" # This regex pattern captures 5 alphanumeric characters after a colon and space
             pattern_2 = r"(?<!^)(?<!(:\s))(?<=(\s))[a-zA-Z]{1}" # This regex pattern captures capital letters after a space but not after a colon and space, and not at the beginning of a string
             playname_raw = re.search(pattern_1, playlist['name']) # Capturing the word(s) after the colon
             if playname_raw:
@@ -28,13 +27,13 @@ def main():
                 else:
                     playlist_dict[playlist['uri']] = playname_short
                 print(playname_short) #
+                print("\n")
             else: #
                 print("N/A") #
-            print("\n") #
         if playlists['next']:
             playlists = sp.next(playlists)
         else:
-            playlists = sp.user_playlists('sirpopey')
+            playlists = sp.user_playlists(os.environ.get("SPOTIFY_USERNAME"))
             break
     # Listing all D&D playlists with their URIs
     # Also listing their shortened versions in playlist_dict

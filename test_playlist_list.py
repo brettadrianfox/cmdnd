@@ -18,7 +18,7 @@ def main():
             print(line_edited)
             new_playlist = sp.user_playlist_create(user_id, line_edited)
             song_dict = sp.playlist_items(playlist['id'], fields='items')
-            songs = [element['track']['id'] for element in song_dict['items'] if element['track']['id'] is not None]
+            songs = [song['track']['id'] for song in song_dict['items'] if song['track']['id'] is not None]
             sp.playlist_add_items(new_playlist['id'], songs)
         if popey_playlists['next']:
             popey_playlists = sp.next(popey_playlists)
