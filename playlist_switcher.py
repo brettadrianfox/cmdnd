@@ -46,6 +46,24 @@ def init_playlist_dict(sp: spotipy.Spotify, playlists: spotipy.Spotify.user_play
     # Listing all D&D playlists with their URIs
     # Also listing their shortened versions in playlist_dict    
 
+def find_playlist(playlist_dict: dict, user_input: str, sp: spotipy.Spotify):
+    while playlists: # TODO: REFORMAT THIS BLOCK
+        found_playlist = False # Variable that checks if we have found our variable
+        for key, val in playlist_dict.items():
+            if user_input == key: # TEMP
+                print(f'\n"{user_input}" is a playlist!\n') #
+                sp.shuffle(True)
+                sp.start_playback(context_uri=val)
+                # print(playlist_dict.values()) #TEMP
+                found_playlist = True
+                break
+        if found_playlist == True:
+            break
+        elif playlists['next']:
+            playlists = sp.next(playlists)
+        else:
+            print(f'\n"{user_input}" is not a playlist!\n') #
+            break
 
 def main():
     token = SpotifyOAuth(client_id=os.environ.get("SPOTIPY_SWITCHER_CLIENT_ID"), client_secret=os.environ.get("SPOTIPY_SWITCHER_CLIENT_SECRET"), redirect_uri=os.environ.get("SPOTIPY_REDIRECT_URI"), scope="streaming,user-read-playback-state", username=os.environ.get("SPOTIFY_USERNAME"))
@@ -66,23 +84,7 @@ def main():
         elif user_input == "ls" or user_input == "list":
             pprint(playlist_dict) # TODO: REFORMAT THE DICT THAT CONTAINS THE PLAYLIST NAMES. MAYBE ADD IT TO THE OLD PLAYLIST DICT THAT SPOTIPY GIVES US?
         else:
-            while playlists: # TODO: REFORMAT THIS BLOCK
-                found_playlist = False # Variable that checks if we have found our variable
-                for key, val in playlist_dict.items():
-                    if user_input == key: # TEMP
-                        print(f'\n"{user_input}" is a playlist!\n') #
-                        sp.shuffle(True)
-                        sp.start_playback(context_uri=val)
-                        # print(playlist_dict.values()) #TEMP
-                        found_playlist = True
-                        break
-                if found_playlist == True:
-                    break
-                elif playlists['next']:
-                    playlists = sp.next(playlists)
-                else:
-                    print(f'\n"{user_input}" is not a playlist!\n') #
-                    break
+            find_playlist(playlist_dict, user_input, sp)
     
 
 
