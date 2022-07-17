@@ -66,7 +66,7 @@ def find_playlist(playlist_dict: dict, user_input: str, sp: spotipy.Spotify):
             break
 
 def main():
-    token = SpotifyOAuth(client_id=os.environ.get("SPOTIPY_SWITCHER_CLIENT_ID"), client_secret=os.environ.get("SPOTIPY_SWITCHER_CLIENT_SECRET"), redirect_uri=os.environ.get("SPOTIPY_REDIRECT_URI"), scope="streaming,user-read-playback-state", username=os.environ.get("SPOTIFY_USERNAME"))
+    token = SpotifyOAuth(client_id=os.environ.get("SPOTIPY_CLIENT_ID"), client_secret=os.environ.get("SPOTIPY_CLIENT_SECRET"), redirect_uri=os.environ.get("SPOTIPY_REDIRECT_URI"), scope="streaming,user-read-playback-state", username=os.environ.get("SPOTIFY_USERNAME"))
     sp = spotipy.Spotify(auth_manager=token)
 
     playlists = sp.user_playlists(os.environ.get("SPOTIFY_USERNAME"))
