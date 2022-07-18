@@ -46,7 +46,7 @@ def init_playlist_dict(sp: spotipy.Spotify, playlists: spotipy.Spotify.user_play
     # Listing all D&D playlists with their URIs
     # Also listing their shortened versions in playlist_dict    
 
-def find_playlist(playlist_dict: dict, user_input: str, sp: spotipy.Spotify):
+def find_playlist(playlist_dict: dict, user_input: str, sp: spotipy.Spotify, playlists):
     while playlists: # TODO: REFORMAT THIS BLOCK
         found_playlist = False # Variable that checks if we have found our variable
         for key, val in playlist_dict.items():
@@ -84,7 +84,7 @@ def main():
         elif user_input == "ls" or user_input == "list":
             pprint(playlist_dict) # TODO: REFORMAT THE DICT THAT CONTAINS THE PLAYLIST NAMES. MAYBE ADD IT TO THE OLD PLAYLIST DICT THAT SPOTIPY GIVES US?
         else:
-            find_playlist(playlist_dict, user_input, sp)
+            find_playlist(playlist_dict, user_input, sp, playlists)
     
 
 
