@@ -5,7 +5,7 @@ import json
 from spotipy.oauth2 import SpotifyOAuth
 
 """
-This Python script creates a .json file with name file_name (defined in the main function) of the format:
+This Python script creates a .json file with name 'file_name' (defined in the main function) of the format:
 
 {
     "RPG: Town/Village": {
@@ -22,6 +22,8 @@ This Python script creates a .json file with name file_name (defined in the main
         ...
 
 }
+
+All playlists added to this .json file have the
 
 The script playlist_switcher.py converts this .json file to a Python dictionary to be used by it.
 """
