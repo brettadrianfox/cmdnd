@@ -22,7 +22,7 @@ def find_playlist(playlist_dict: dict, user_input: str, sp: spotipy.Spotify):
         print(f'\n"{user_input}" is not a playlist in the included dictionary!\n') #
         return
 
-def driver(playlist_dict: dict, sp: spotipy.Spotify, on = bool):
+def driver(playlist_dict: dict, sp: spotipy.Spotify, on = bool): # TODO: Add index/guide for commands
     user_input = input("Input a playlist name (type q to quit): ") #TEMP
     # user_input = "p" #TEMP
     if user_input == "q" or user_input == "quit":
