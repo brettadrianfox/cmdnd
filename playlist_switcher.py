@@ -39,7 +39,7 @@ def driver(playlist_dict: dict, sp: spotipy.Spotify, on = bool):
         if playback_info['is_playing']:
             sp.next_track()
         else:
-            print(f'\nPlayback is paused!\n')
+            print(f'\nPlayback is paused. Cannot skip. \n')
     elif user_input == "ls" or user_input == "list":
         pprint.pprint(playlist_dict)
     else:
