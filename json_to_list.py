@@ -7,7 +7,3 @@ from pprint import pprint
 
 with open("srd_5e_monsters.json") as srd_list:
     srd_list = json.load(srd_list)
-
-with open("srd_list.txt") as txt_file:
-    for element in srd_list:
-        txt_file.write(str(element))
