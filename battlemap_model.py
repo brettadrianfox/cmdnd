@@ -1,3 +1,10 @@
+from json_to_list import srd_list
+import numpy as np
+import numpy.ma as ma
+import json
+import re
+import sys
+
 """
 This is the model in a model-view-controller framework for the RPG battlemap grid.
 """
@@ -7,29 +14,24 @@ class BattleMap:
     def __init__(self, x_squares: int, y_squares: int):
         self._max_x = x_squares
         self._max_y = y_squares
-        self._being_list = [] # A list of all entities on the battle map
-        self._grid = [] # A list of lists that represents the battle map. Each tile represents 5 square feet.
+        self._being_list = [] # A list of the names of all entities on the battle map. NAMES MUST BE UNIQUE
+        self._grid = np.empty((self._max_x, self._max_y), dtype=object) # A list of lists that represents the battle map. Each tile represents 5 square feet.
         self._round = 0
         self._initiative_order = []
         self._current_turn = None # TODO: Try deleting this when you have "update" function enabled
-
-
-        for i in range(self._max_y):
-            row = []
-            for i in range(self._max_x):
-                row.append(None)
-            self._grid.append(row)
+        self._creature_dict = srd_list # TODO: Refactor this into another function?
+        # TODO: Add a list of names to be used on the battle map
 
     def __repr__(self):
         grid_list = []
         for count_y, row in enumerate(self._grid):
             row_list = []
             for count_x, element in enumerate(row):
-                if element == None:
+                if type(element) is tuple: # All entities must be tuples
+                    row_list.append(element) # TODO: Append the object/entity's representation
+                else:
                     coord_tuple = (count_x + 1, self._max_y - count_y)
                     row_list.append(coord_tuple) # The pound sign represents an empty tile
-                else:
-                    row_list.append(element[:4]) # TODO: Append the object/entity's representation
             row_repr = str(row_list).strip("[]")
             grid_list.append(row_repr)
         grid_repr = "\n".join(grid_list)
@@ -38,33 +40,63 @@ class BattleMap:
 
     def add_being(self, to_add: "Being"):
         self._being_list.append(to_add)
-        self._grid[self._max_y - to_add._y_position][to_add._x_position - 1] = to_add._name # TODO: Make sure no two beings have the same name
+        name_type_tuple = (to_add._name, f"({to_add._type})") # TODO: Remove quotes from name_type_tuple in repr of battle_map
+        self._grid[self._max_y - to_add._y_position, to_add._x_position - 1] = name_type_tuple # TODO: Make sure no two beings have the same name
         # The grid is 1-indexed, so we subtract 1 from the positions
         # We subtract to_add._y_position from self._max_y because we are converting Cartesian y-coordinates (0 on bottom) to row-major y-coordinates (0 on top)
 
     def remove_being(self, to_remove: "Being"):
         self._being_list.remove(to_remove)
-        self._grid[self._max_y - to_remove._y_position][to_remove._x_position - 1] = None
+        self._grid[self._max_y - to_remove._y_position, to_remove._x_position - 1] = None
         # The grid is 1-indexed, so we subtract 1 from the positions
         # We subtract to_add._y_position from self._max_y because we are converting Cartesian y-coordinates (0 on bottom) to row-major y-coordinates (0 on top)
 
     def move_being(self, to_move: "Being", direction, magnitude):
-        self.remove_being(to_move)
-        to_move.move(direction, magnitude, self, direction_dict=to_move.base_direction_dict)
-        self._grid[self._max_y - to_move._y_position][to_move._x_position - 1] = to_move._name
+        if magnitude < 0:
+            print("Magnitude cannot be negative!")
+            sys.exit(0)
+        else:
+            try:
+                self.remove_being(to_move)
+                to_move.move(direction, magnitude)
+                self.add_being(to_move)
+            except IndexError:
+                print("List wrap-around is invalid for movement!")
+                sys.exit(0)
+        # TODO: Print a more specific error message here [number of feet/squares you are actually allowed to move]
+        # TODO: If there is a list wrap-around, replace it with moving to the edge of the board (collision detection)
         # The grid is 1-indexed, so we subtract 1 from the x-position
         # We subtract to_add._y_position from self._max_y because we are converting Cartesian y-coordinates (0 on bottom) to row-major y-coordinates (0 on top)
 
 
 class Being:
 
-    def __init__(self, name, x_position, y_position, speed, swimming_speed = None, flying_speed = None):
-        self._name = name
+    def __init__(self, name, type, x_position, y_position, battle_map: BattleMap): # TODO: Add being "types" to be loaded into this class, i.e. Adult Red Dragon, Lizardfolk Shaman, etc.
+        # TODO: Distinguish between being type (Ancient Red Dragon) and being name (Smaug)
+        self._name = name # TODO: Make sure name is less than 256 characters!
+
+        for element in battle_map._creature_dict:
+            if type.lower() == element["name"].lower(): # TEMP
+                self._type = element["name"] # TODO: Add error handling for inputted type not contained within battle map creature dict
+                self._type_dict_element = element
+                
         self._x_position = x_position # 1-indexed, using Cartesian coordinates
         self._y_position = y_position # 1-indexed, using Cartesian coordinates
-        self._speed = speed
-        self._swimming_speed = swimming_speed
-        self._flying_speed = flying_speed
+        self._speed = int(re.search(r"^[0-9]{1,4}", self._type_dict_element["Speed"]).group()) # Capturing the first 1-4 numbers at the beginning of the str
+
+        swimming_speed = re.search(r"(?<=swim )[0-9]{1,4}", self._type_dict_element["Speed"])
+        if swimming_speed is not None:
+            self._swimming_speed = swimming_speed.group()
+
+        flying_speed = re.search(r"(?<=fly )[0-9]{1,4}", self._type_dict_element["Speed"])
+        if flying_speed is not None:
+            self._flying_speed = flying_speed.group()
+
+        burrowing_speed = re.search(r"(?<=burrow )[0-9]{1,4}", self._type_dict_element["Speed"])
+        if burrowing_speed is not None:
+            self._burrowing_speed = burrowing_speed.group()
+
+        
 
     def __repr__(self):
         return self._name
@@ -72,103 +104,35 @@ class Being:
     def __str__(self):
         return self._name
 
-    def right_movement(self, magnitude, battle_map: BattleMap):
-        if self._x_position + int(magnitude/5) < self._x_position: # Checking for list wrap arounds (collision detection)
-            self._x_position = battle_map._max_x
-        else:
-            self._x_position += int(magnitude/5)
+    def right_movement(self, magnitude):
+        self._x_position += int(magnitude/5)
 
-    def up_right_movement(self, magnitude, battle_map: BattleMap):
-        no_x_collision = self._x_position + int(magnitude/5) >= self._x_position
-        no_y_collision = self._y_position + int(magnitude/5) >= self._y_position
-        collision_list = [no_x_collision, no_y_collision]
+    def up_right_movement(self, magnitude):
+        self._x_position += int((0.7071*magnitude)/5) # Decomposing a unit vector in 2-D into its orthogonal components
+        self._y_position += int((0.7071*magnitude)/5)
 
-        if all(collision_list): # Checking for no collisions in either direction
-            self._x_position += int((0.7071*magnitude)/5)
-            self._y_position += int((0.7071*magnitude)/5)
-        elif not no_x_collision and no_y_collision: # Checking if there is an x-collision but no y-collison
-            self._x_position = battle_map._max_x
-            self._y_position += int((0.7071*magnitude)/5)
-        elif not no_y_collision and no_x_collision: # Checking if there is a y-collision but no x-collision
-            self._y_position = battle_map._max_y
-            self._x_position += int((0.7071*magnitude)/5)
-        else: # Only true if there are collisions in both directions
-            self._x_position = battle_map._max_x
-            self._y_position = battle_map._max_y
+    def up_movement(self, magnitude):
+        self._y_position += int(magnitude/5)
 
-    def up_movement(self, magnitude, battle_map: BattleMap):
-        if self._y_position + int(magnitude/5) < self._y_position: # Checking for list wrap arounds (collision detection)
-            self._y_position = battle_map._max_y
-        else:
-            self._y_position += int(magnitude/5)
+    def up_left_movement(self, magnitude):
+        self._x_position -= int((0.7071*magnitude)/5)
+        self._y_position += int((0.7071*magnitude)/5)
 
-    def up_left_movement(self, magnitude, battle_map: BattleMap):
-        no_x_collision = self._x_position - int(magnitude/5) <= self._x_position
-        no_y_collision = self._y_position + int(magnitude/5) >= self._y_position
-        collision_list = [no_x_collision, no_y_collision]
+    def left_movement(self, magnitude):
+        self._x_position -= int(magnitude/5)
 
-        if all(collision_list): # Checking for no collisions in either direction
-            self._x_position -= int((0.7071*magnitude)/5)
-            self._y_position += int((0.7071*magnitude)/5)
-        elif not no_x_collision and no_y_collision: # Checking if there is an x-collision but no y-collison
-            self._x_position = 1 # Minimum value of x-position for all beings
-            self._y_position += int((0.7071*magnitude)/5)
-        elif not no_y_collision and no_x_collision: # Checking if there is a y-collision but no x-collision
-            self._y_position = battle_map._max_y # Minimum value of y-position for all beings
-            self._x_position -= int((0.7071*magnitude)/5)
-        else: # Only true if there are collisions in both directions
-            self._x_position = 1 # Minimum value of x-position for all beings
-            self._y_position = battle_map._max_y
+    def down_left_movement(self, magnitude):
+        self._x_position -= int((0.7071*magnitude)/5)
+        self._y_position -= int((0.7071*magnitude)/5)
 
-    def left_movement(self, magnitude, battle_map: BattleMap):
-        if self._x_position - int(magnitude/5) > self._x_position: # Checking for list wrap arounds (collision detection)
-            self._x_position = 1 # Minimum value of x-position for all beings
-        else:
-            self._x_position -= int(magnitude/5)
+    def down_movement(self, magnitude):
+        self._y_position -= int(magnitude/5)
 
-    def down_left_movement(self, magnitude, battle_map: BattleMap):
-        no_x_collision = self._x_position - int(magnitude/5) <= self._x_position
-        no_y_collision = self._y_position + int(magnitude/5) >= self._y_position
-        collision_list = [no_x_collision, no_y_collision]
+    def down_right_movement(self, magnitude):
+        self._x_position += int((0.7071*magnitude)/5)
+        self._y_position -= int((0.7071*magnitude)/5)
 
-        if all(collision_list): # Checking for no collisions in either direction
-            self._x_position -= int((0.7071*magnitude)/5)
-            self._y_position -= int((0.7071*magnitude)/5)
-        elif not no_x_collision and no_y_collision: # Checking if there is an x-collision but no y-collison
-            self._x_position = 1 # Minimum value of x-position for all beings
-            self._y_position -= int((0.7071*magnitude)/5)
-        elif not no_y_collision and no_x_collision: # Checking if there is a y-collision but no x-collision
-            self._y_position = 1 # Minimum value of y-position for all beings
-            self._x_position -= int((0.7071*magnitude)/5)
-        else: # Only true if there are collisions in both directions
-            self._x_position = 1 # Minimum value of x-position for all beings
-            self._y_position = 1 # Minimum value of y-position for all beings
-
-    def down_movement(self, magnitude, battle_map: BattleMap):
-        if self._y_position - int(magnitude/5) < self._y_position: # Checking for list wrap arounds (collision detection)
-            self._y_position = 1 # Minimum value of x-position for all beings
-        else:
-            self._y_position -= int(magnitude/5)
-
-    def down_right_movement(self, magnitude, battle_map: BattleMap):
-        no_x_collision = self._x_position + int(magnitude/5) >= self._x_position
-        no_y_collision = self._y_position - int(magnitude/5) <= self._y_position
-        collision_list = [no_x_collision, no_y_collision]
-
-        if all(collision_list): # Checking for no collisions in either direction
-            self._x_position += int((0.7071*magnitude)/5)
-            self._y_position -= int((0.7071*magnitude)/5)
-        elif not no_x_collision and no_y_collision: # Checking if there is an x-collision but no y-collison
-            self._x_position = battle_map._max_x
-            self._y_position -= int((0.7071*magnitude)/5)
-        elif not no_y_collision and no_x_collision: # Checking if there is a y-collision but no x-collision
-            self._y_position = 1 # Minimum value of y-position for all beings
-            self._x_position += int((0.7071*magnitude)/5)
-        else: # Only true if there are collisions in both directions
-            self._x_position = battle_map._max_x 
-            self._y_position = 1 # Minimum value of y-position for all beings
-
-    base_direction_dict = { # TODO: Refactor direction into a class of its own
+    _base_direction_dict = { # TODO: Refactor direction into a class of its own
         "r": right_movement,
         "ur": up_right_movement,
         "u": up_movement,
@@ -179,23 +143,80 @@ class Being:
         "dr": down_right_movement
     }
 
-    def move(self, direction, magnitude, battle_map: BattleMap, direction_dict=base_direction_dict): # Magnitude is in feet
+    def move(self, direction, magnitude): # Magnitude is in feet
         try:
-            direction_dict[direction](self, magnitude, battle_map) # TODO: Add try-except for error handling here # TEMP
+            if magnitude > self._speed: # TODO: Add functionality for swimming, climbing, burrowing, etc.
+                self._base_direction_dict[direction](self, self._speed)
+            else:
+                self._base_direction_dict[direction](self, magnitude) # TODO: Add try-except for error handling here # TEMP
         except KeyError:
-            print("Input not a valid direction")
+            print("Input not a valid direction!")
+            sys.exit(0)
 
 
-def main(): #
+def main():
+
     test_map = BattleMap(10, 10)
 
-    test_being = Being("test_being", 2, 2, 30)
+    test_being = Being("test_being", "commoner", 2, 2, test_map)
 
     test_map.add_being(test_being)
 
     print(repr(test_map))
 
-    test_map.move_being(test_being, "u", 0) # TEMP
+    test_map.move_being(test_being, "u", 40) # TEMP
+
+    print(repr(test_map))
+
+    test_map.move_being(test_being, "r", 40) # TEMP
+
+    print(repr(test_map))
+
+    test_map.move_being(test_being, "d", 45) # TEMP
+
+    print(repr(test_map))
+
+    test_map.move_being(test_being, "l", 45) # TEMP
+
+    print(repr(test_map))
+
+    test_map.move_being(test_being, "u", 45) # TEMP
+
+    print(repr(test_map))
+
+    test_map.move_being(test_being, "r", 45) # TEMP
+
+    print(repr(test_map))
+
+    test_map.move_being(test_being, "d", 45) # TEMP
+
+    print(repr(test_map))
+
+    test_map.move_being(test_being, "ul", 70) # TEMP
+
+    print(repr(test_map))
+
+    test_map.move_being(test_being, "d", 45) # TEMP
+
+    print(repr(test_map))
+
+    test_map.move_being(test_being, "ur", 70) # TEMP
+
+    print(repr(test_map))
+
+    test_map.move_being(test_being, "dl", 36) # TEMP
+
+    print(repr(test_map))
+
+    test_map.move_being(test_being, "dl", 35) # TEMP
+
+    print(repr(test_map))
+
+    test_map.move_being(test_being, "ur", 8) # TEMP
+
+    print(repr(test_map))
+
+    # TODO: Test diagonal movement!
  
     print(repr(test_map))
 
