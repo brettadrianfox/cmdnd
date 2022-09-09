@@ -96,6 +96,8 @@ class Being:
         if burrowing_speed is not None:
             self._burrowing_speed = burrowing_speed.group()
 
+        self._strength = int(re.search(r"^[0-9]{1,2}", self._type_dict_element["Speed"]).group())
+
         
 
     def __repr__(self):
