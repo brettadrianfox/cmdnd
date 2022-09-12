@@ -1,4 +1,5 @@
 from json_to_list import srd_list
+from random import randint
 import numpy as np
 import numpy.ma as ma
 import json
@@ -40,8 +41,8 @@ class BattleMap:
 
     def add_being(self, to_add: "Being"):
         self._being_list.append(to_add)
-        name_type_tuple = (to_add._name, f"({to_add._type})") # TODO: Remove quotes from name_type_tuple in repr of battle_map
-        self._grid[self._max_y - to_add._y_position, to_add._x_position - 1] = name_type_tuple # TODO: Make sure no two beings have the same name
+        name_category_tuple = (to_add._name, f"({to_add._category})") # TODO: Remove quotes from name_type_tuple in repr of battle_map
+        self._grid[self._max_y - to_add._y_position, to_add._x_position - 1] = name_category_tuple # TODO: Make sure no two beings have the same name
         # The grid is 1-indexed, so we subtract 1 from the positions
         # We subtract to_add._y_position from self._max_y because we are converting Cartesian y-coordinates (0 on bottom) to row-major y-coordinates (0 on top)
 
@@ -71,34 +72,90 @@ class BattleMap:
 
 class Being:
 
-    def __init__(self, name, type, x_position, y_position, battle_map: BattleMap): # TODO: Add being "types" to be loaded into this class, i.e. Adult Red Dragon, Lizardfolk Shaman, etc.
-        # TODO: Distinguish between being type (Ancient Red Dragon) and being name (Smaug)
+    def __init__(self, name, category, x_position, y_position, battle_map: BattleMap): # TODO: Add being "categories" to be loaded into this class, i.e. Adult Red Dragon, Lizardfolk Shaman, etc.
+        # TODO: Distinguish between being category (Ancient Red Dragon) and being name (Smaug)
         self._name = name # TODO: Make sure name is less than 256 characters!
 
         for element in battle_map._creature_dict:
-            if type.lower() == element["name"].lower(): # TEMP
-                self._type = element["name"] # TODO: Add error handling for inputted type not contained within battle map creature dict
-                self._type_dict_element = element
+            if category.lower() == element["name"].lower(): # TEMP
+                self._category = element["name"] # TODO: Add error handling for inputted category not contained within battle map creature dict
+                self._category_dict_element = element
                 
         self._x_position = x_position # 1-indexed, using Cartesian coordinates
         self._y_position = y_position # 1-indexed, using Cartesian coordinates
-        self._speed = int(re.search(r"^[0-9]{1,4}", self._type_dict_element["Speed"]).group()) # Capturing the first 1-4 numbers at the beginning of the str
+        self._speed = int(re.search(r"^[0-9]{1,4}", self._category_dict_element["Speed"]).group()) # Capturing the first 1-4 numbers at the beginning of the str
 
-        swimming_speed = re.search(r"(?<=swim )[0-9]{1,4}", self._type_dict_element["Speed"])
+        swimming_speed = re.search(r"(?<=swim )[0-9]{1,4}", self._category_dict_element["Speed"])
         if swimming_speed is not None:
             self._swimming_speed = swimming_speed.group()
 
-        flying_speed = re.search(r"(?<=fly )[0-9]{1,4}", self._type_dict_element["Speed"])
+        flying_speed = re.search(r"(?<=fly )[0-9]{1,4}", self._category_dict_element["Speed"])
         if flying_speed is not None:
             self._flying_speed = flying_speed.group()
 
-        burrowing_speed = re.search(r"(?<=burrow )[0-9]{1,4}", self._type_dict_element["Speed"])
+        burrowing_speed = re.search(r"(?<=burrow )[0-9]{1,4}", self._category_dict_element["Speed"])
         if burrowing_speed is not None:
             self._burrowing_speed = burrowing_speed.group()
 
-        self._strength = int(re.search(r"^[0-9]{1,2}", self._type_dict_element["Speed"]).group())
+        strength = int(self._category_dict_element["STR"])
+        dexterity = int(self._category_dict_element["DEX"])
+        constitution = int(self._category_dict_element["CON"])
+        wisdom = int(self._category_dict_element["WIS"])
+        intelligence = int(self._category_dict_element["INT"])
+        charisma = int(self._category_dict_element["CHA"])
 
+        self._ability_scores = {
+            "STR": strength,
+            "DEX": dexterity,
+            "CON": constitution,
+            "WIS": wisdom,
+            "INT": intelligence,
+            "CHA": charisma
+        }
+
+        strength_modifier = int(re.search(r"[0-9,-]{1,2}", self._category_dict_element["STR_mod"]).group())
+        dexterity_modifier = int(re.search(r"[0-9,-]{1,2}", self._category_dict_element["DEX_mod"]).group())
+        constitution_modifier = int(re.search(r"[0-9,-]{1,2}", self._category_dict_element["CON_mod"]).group())
+        wisdom_modifier = int(re.search(r"[0-9,-]{1,2}", self._category_dict_element["WIS_mod"]).group())
+        intelligence_modifier = int(re.search(r"[0-9,-]{1,2}", self._category_dict_element["INT_mod"]).group())
+        charisma_modifier = int(re.search(r"[0-9,-]{1,2}", self._category_dict_element["CHA_mod"]).group())
+
+        self._ability_modifiers = {
+            "STR": strength_modifier,
+            "DEX": dexterity_modifier,
+            "CON": constitution_modifier,
+            "WIS": wisdom_modifier,
+            "INT": intelligence_modifier,
+            "CHA": charisma_modifier
+        }
+
+        self._hp_max_static = int(re.search(r"^[0-9]{1,4}", self._category_dict_element["Hit Points"]).group())
+
+        num_hit_dice = int(re.search(r"?<=\()[0-9]{1,4}", self._category_dict_element["Hit Points"]).group()) # TODO: Make this a self._ variable?
+
+        hit_dice_type = int(re.search(r"?<=d)[0-9]{1,3}", self._category_dict_element["Hit Points"]).group()) # TODO: Make this a self._ variable?
+
+        hp_modifier = int(re.search(r"(?<=\+ )[0-9,-]{1,4}", self._category_dict_element["Hit Points"]).group()) # TODO: Make this a self._ variable?
+
+        self._hp_max_dynamic = num_hit_dice*randint(1, hit_dice_type) + hp_modifier
+
+        # TODO: Implement current_hp (choice between static and dynamic hp)
+
+        self._armor_class = int(re.search(r"^[0-9]{1,2}", self._category_dict_element["Armor Class"]).group())
+
+        self._size = re.search(r"^[a-zA-Z]+(?= )", self._category_dict_element["meta"]).group()
         
+        self._type = re.search(r"(?<= )[a-zA-Z,(,) ]+(?=,)", self._category_dict_element["meta"]).group() # i.e. humanoid, abberation, etc.
+
+        self._alignment = re.search(r"(?<=, )[a-zA-Z, ]+$", self._category_dict_element["meta"]).group()
+
+
+
+
+
+
+
+        # self._hp_max_variable = # TEMP
 
     def __repr__(self):
         return self._name
@@ -229,9 +286,9 @@ if __name__ == "__main__":
 SCAFFOLDING:
 
 BattleMap:
-    * __max_x
-    * __max_y
-    * __being_list
+    * __max_x v/
+    * __max_y v/
+    * __being_list v/
     * __round
     * __initiative_order
     * __current_turn # Who's turn is it?
@@ -251,17 +308,17 @@ BattleMap:
         Object: (Something that impedes progress)
 
     Being: (A thing that moves on the battle map that can be killed)
-        * __x_position
-        * __y_position
-        * __sizeof
+        * __x_position v/
+        * __y_position v/
+        * __size_of
         * __ambient_effect # THE EFFECT AN ENTITY HAS SIMPLY BY EXISTING ON THE BATTLE MAP
         * __current_hp
-        * __hp_max
+        * __hp_max v/
         * __temporary_hp
         * __armor_class
         * __languages
         * __skills
-        * __attributes
+        * __attributes v/
         * __saving throws
         * __damage_resistances
         * __damage_immunities
@@ -270,7 +327,7 @@ BattleMap:
         * __experience points
         * __spells_known
         * __effects
-        * __speed
+        * __speed v/
         * move
         * 
 
