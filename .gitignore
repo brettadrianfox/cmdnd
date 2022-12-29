@@ -2,4 +2,4 @@ workspace.code-workspace
 
 .vscode
 
-__pycache
+__pycache__
