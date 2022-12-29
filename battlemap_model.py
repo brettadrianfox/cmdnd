@@ -52,7 +52,7 @@ class BattleMap:
         # The grid is 1-indexed, so we subtract 1 from the positions
         # We subtract to_add._y_position from self._max_y because we are converting Cartesian y-coordinates (0 on bottom) to row-major y-coordinates (0 on top)
 
-    def move_being(self, to_move: "Being", direction, magnitude):
+    def move_being(self, to_move: "Being", direction, magnitude): # TODO: Make moving "through" corners impossible
         if magnitude < 0:
             print("Magnitude cannot be negative!")
             sys.exit(0)
@@ -78,7 +78,7 @@ class Being:
 
         for element in battle_map._creature_dict:
             if category.lower() == element["name"].lower(): # TEMP
-                self._category = element["name"] # TODO: Add error handling for inputted category not contained within battle map creature dict
+                self._category = element["name"].lower() # TODO: Add error handling for inputted category not contained within battle map creature dict
                 self._category_dict_element = element
                 
         self._x_position = x_position # 1-indexed, using Cartesian coordinates
@@ -129,25 +129,29 @@ class Being:
             "CHA": charisma_modifier
         }
 
-        self._hp_max_static = int(re.search(r"^[0-9]{1,4}", self._category_dict_element["Hit Points"]).group())
+        self._hp_max_static = int(re.search(r"^[0-9]{1,4}", self._category_dict_element["Hit Points"]).group()) # TODO: Add a global setting where you can choose between static and dynamic hp maxes
 
-        num_hit_dice = int(re.search(r"?<=\()[0-9]{1,4}", self._category_dict_element["Hit Points"]).group()) # TODO: Make this a self._ variable?
+        self._num_hit_dice = int(re.search(r"(?<=\()[0-9]{1,4}", self._category_dict_element["Hit Points"]).group()) # TODO: Make this a self._ variable?
 
-        hit_dice_type = int(re.search(r"?<=d)[0-9]{1,3}", self._category_dict_element["Hit Points"]).group()) # TODO: Make this a self._ variable?
+        self._hit_dice_type = "d" + str(re.search(r"(?<=d)[0-9]{1,3}", self._category_dict_element["Hit Points"]).group()) # TODO: Make this a self._ variable?
 
-        hp_modifier = int(re.search(r"(?<=\+ )[0-9,-]{1,4}", self._category_dict_element["Hit Points"]).group()) # TODO: Make this a self._ variable?
+        hp_modifier = re.search(r"(?<= )[\-,0-9]", self._category_dict_element["Hit Points"]) # TODO: Make this a self._ variable?
+        if hp_modifier is not None:
+            self._hp_modifier = int(hp_modifier.group())
+        else:
+            self._hp_modifier = 0
 
-        self._hp_max_dynamic = num_hit_dice*randint(1, hit_dice_type) + hp_modifier
+        self._hp_max_dynamic = self._num_hit_dice*randint(1, int(self._hit_dice_type[1])) + self._hp_modifier
 
         # TODO: Implement current_hp (choice between static and dynamic hp)
 
         self._armor_class = int(re.search(r"^[0-9]{1,2}", self._category_dict_element["Armor Class"]).group())
-
-        self._size = re.search(r"^[a-zA-Z]+(?= )", self._category_dict_element["meta"]).group()
         
         self._type = re.search(r"(?<= )[a-zA-Z,(,) ]+(?=,)", self._category_dict_element["meta"]).group() # i.e. humanoid, abberation, etc.
 
         self._alignment = re.search(r"(?<=, )[a-zA-Z, ]+$", self._category_dict_element["meta"]).group()
+
+        self._size = re.search(r"^[a-zA-Z]+", self._category_dict_element["meta"]).group().lower()
 
 
 
@@ -315,7 +319,7 @@ BattleMap:
         * __current_hp
         * __hp_max v/
         * __temporary_hp
-        * __armor_class
+        * __armor_class v/
         * __languages
         * __skills
         * __attributes v/
