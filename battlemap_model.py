@@ -153,6 +153,51 @@ class Being:
 
         self._size = re.search(r"^[a-zA-Z]+", self._category_dict_element["meta"]).group().lower()
 
+        if "Languages" in self._category_dict_element.keys():
+            self._languages = re.findall(r"([A-Z][^\,\n]+)", self._category_dict_element["Languages"])
+        else:
+            self._languages = None # NoneType represents no element present
+
+        if "Skills" in self._category_dict_element.keys():
+            skills_temp = re.findall(r"([A-Z][^\,\n]+)", self._category_dict_element["Skills"])
+            skills_dict = {}
+            for element in skills_temp:
+                skill_name = re.search(r"([A-Z][^\s]+)", element).group()
+                skill_modifier = re.search(r"(?<=[\s\+])[0-9\-]+", element).group()
+                skills_dict[skill_name] = int(skill_modifier) # Skill name is key, skill modifier is val
+            self._skills = skills_dict
+        else:
+            self._skills = None # NoneType represents no element present
+
+        if "Saving Throws" in self._category_dict_element.keys():
+            saving_throws_temp = re.findall(r"([A-Z][^\,\n]+)", self._category_dict_element["Saving Throws"])
+            saving_throws_dict = {}
+            for element in saving_throws_temp:
+                saving_throw_type = re.search(r"([A-Z][^\s]+)", element).group()
+                saving_throw_modifier = re.search(r"(?<=[\s\+])[0-9\-]+", element).group()
+                saving_throws_dict[saving_throw_type] = int(saving_throw_modifier) # Skill name is key, skill modifier is val
+            self._saving_throws = saving_throws_dict
+        else:
+            self._saving_throws = None # NoneType represents no element present
+
+        if "Damage Resistances" in self._category_dict_element.keys():
+            self._damage_resistances = re.findall(r"([A-Z][^\,\;\n]+)", self._category_dict_element["Damage Resistances"])
+        else:
+            self._damage_resistances = None # NoneType represents no element present
+
+        if "Damage Immunities" in self._category_dict_element.keys():
+            self._damage_immunities = re.findall(r"([A-Z][^\,\;\n]+)", self._category_dict_element["Damage Immunities"])
+        else:
+            self._damage_immunities = None # NoneType represents no element present
+
+        if "Condition Immunities" in self._category_dict_element.keys():
+            self._condition_immunities = re.findall(r"([A-Z][^\,\;\n]+)", self._category_dict_element["Condition Immunities"])
+        else:
+            self._condition_immunities = None # NoneType represents no element present
+
+        # TODO: Regex for self._senses
+
+        # TODO: Determine if key not present in monster json dict means it does not exist in "Being" object, or it exists, but equals None
 
 
 
@@ -221,9 +266,13 @@ def main():
 
     test_map = BattleMap(10, 10)
 
-    test_being = Being("test_being", "commoner", 2, 2, test_map)
+    test_being = Being("test_being", "succubus/incubus", 2, 2, test_map)
+
+    test_being_2 = Being("test_being_2", "adult green dragon", 8, 3, test_map)
 
     test_map.add_being(test_being)
+    
+    test_map.add_being(test_being_2)
 
     print(repr(test_map))
 
@@ -314,18 +363,19 @@ BattleMap:
     Being: (A thing that moves on the battle map that can be killed)
         * __x_position v/
         * __y_position v/
-        * __size_of
+        * __size_of v/
         * __ambient_effect # THE EFFECT AN ENTITY HAS SIMPLY BY EXISTING ON THE BATTLE MAP
         * __current_hp
         * __hp_max v/
         * __temporary_hp
         * __armor_class v/
-        * __languages
-        * __skills
+        * __languages v/
+        * __skills v/
         * __attributes v/
-        * __saving throws
-        * __damage_resistances
-        * __damage_immunities
+        * __saving throws v/
+        * __damage_resistances v/
+        * __damage_immunities v/
+        *   condition_immunities v/
         * __senses
         * __challenge_rating
         * __experience points
