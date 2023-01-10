@@ -3,7 +3,6 @@ This throwaway script generates a python list out of the json file for the SRD f
 """
 
 import json
-from pprint import pprint
 
 with open("srd_5e_monsters.json") as srd_list:
     srd_list = json.load(srd_list)
