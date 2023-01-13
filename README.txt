@@ -6,12 +6,19 @@ For the Python code on this project, we use Pylint as our linter to catch and co
 
 Guide to the files:
 
-    playlist_switcher.py allows the user to switch between Spotify playlists in the rpgdict.json file in their terminal
-    for a fast and smooth tabletop RPG experience.
+    Spotify playlist switcher files:
+    These files exist to switch between custom Spotify playlists in the terminal. Will eventually be integrated into a GUI.
 
-    playlist_copier.py is the original script: it copies a collection of another user's Spotify playlists 
-    (using the Spotipy library) and uses them as a base to generate playlists for the signed-in user. This 
-    is used if you want to copy another user's playlists en masse.
+        playlist_switcher.py allows the user to switch between Spotify playlists in the rpgdict.json file in their terminal
+        for a fast and smooth tabletop RPG experience.
+
+        playlist_copier.py is the original script: it copies a collection of another user's Spotify playlists 
+        (using the Spotipy library) and uses them as a base to generate playlists for the signed-in user. This 
+        is used if you want to copy another user's playlists in bulk
+
+        playlist_dict_creator.py transforms a json file of Spotify playlists into a Python dictionary used by playlist_switcher.py
+
+
 
     
 
