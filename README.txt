@@ -2,7 +2,8 @@ The project name, "cmdnd" is a pun. Since its original purpose was a simple Pyth
 playlists in the cmd terminal for Dungeons and Dragons games. Yes, I know that PowerShell is the new Windows terminal,
 but the pun was too good (bad) to pass up on.
 
-For the Python code on this project, we use Pylint as our linter to catch and correct problems and errors
+For the Python code on this project, we use Pylint as our linter to catch and correct problems and errors. Try to keep PEP8 compliance if
+possible
 
 Guide to the files:
 
@@ -41,7 +42,7 @@ Guide to the files:
 
             battlemap_controller does not exist yet, but will "interface" between battlemap_model and battlemap_view
 
-    We plan on including in the overall Cmdnd screen a battlemap, a terminal where you can input commands to manipulate the map, 
+    We plan on including in the overall Cmdnd screen a battlemap and a terminal where you can input commands to manipulate the map, 
     The Spotify playlist integration may not be part of the final program, depending on how hard it is to integrate into the web app.
     
     Similarly, we plan on setting this up as a web app, but we might do a standard program if a web app is too hard
