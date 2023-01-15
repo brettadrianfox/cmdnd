@@ -2,3 +2,5 @@ workspace.code-workspace
 .vscode
 __pycache__
 .cache-bfoxius
+playlist_copier.py
+json_to_list.py
