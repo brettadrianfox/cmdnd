@@ -261,6 +261,17 @@ class Being:
             print("Input not a valid direction!")
             sys.exit(0)
 
+def driver(on = bool): # TODO: Add index/guide for commands
+    user_input = input("Input a battlemap command: ") #TEMP
+    # user_input = "p" #TEMP
+    if user_input == "q" or user_input == "quit":
+        on = False
+        return on
+    elif user_input == "ls" or user_input == "list":
+        pprint.pprint(playlist_dict)
+    else:
+        find_playlist(playlist_dict, user_input, sp) # TODO: Implement is_paused functionality -- don't play playlist if the status is set to paused
+    return on
 
 def main():
 

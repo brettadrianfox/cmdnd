@@ -10,10 +10,10 @@ sp = spotipy.Spotify(auth_manager=token)
 
 def main():
     user_id = sp.me()['id']
-    popey_playlists = sp.user_playlists('sirpopey')
+    other_user_playlists = sp.user_playlists('OTHER_SPOTIFY_USERNAME')
 
-    while popey_playlists:
-        for playlist in popey_playlists['items']:
+    while other_user_playlists:
+        for playlist in other_user_playlists['items']:
             line_split = playlist['name'].split()
             line_joined = " ".join(line_split[1:])
             line_edited = "RPG: " + line_joined
@@ -26,10 +26,10 @@ def main():
                     songs.extend(song['track']['id']) # TODO: Check if this works instead of the list comprehension!
             # songs = [song['track']['id'] for song in song_dict['items'] if song['track']['id'] is not None]
             sp.playlist_add_items(new_playlist['id'], songs)
-        if popey_playlists['next']:
-            popey_playlists = sp.next(popey_playlists)
+        if other_user_playlists['next']:
+            other_user_playlists = sp.next(other_user_playlists)
         else:
-            popey_playlists = None
+            other_user_playlists = None
 
     user_id = sp.me()['id']
 
