@@ -86,8 +86,9 @@ class BattleMap:
 
 
 class Being:
+    """ All unmarked distances are in feet"""
 
-    def __init__(self, name, category, x_position, y_position, battle_map: BattleMap): # TODO: Add being "categories" to be loaded into this class, i.e. Adult Red Dragon, Lizardfolk Shaman, etc.
+    def __init__(self, category, name, x_pos, y_pos, battle_map: BattleMap): # TODO: Add being "categories" to be loaded into this class, i.e. Adult Red Dragon, Lizardfolk Shaman, etc.
         # TODO: Distinguish between being category (Ancient Red Dragon) and being name (Smaug)
         self._name = name # TODO: Make sure name is less than 256 characters!
 
@@ -96,8 +97,8 @@ class Being:
                 self._category = element["name"].lower() # TODO: Add error handling for inputted category not contained within battle map creature dict
                 self._category_dict_element = element
                 
-        self._x_position = x_position # 1-indexed, using Cartesian coordinates
-        self._y_position = y_position # 1-indexed, using Cartesian coordinates
+        self._x_position = x_pos # 1-indexed, using Cartesian coordinates
+        self._y_position = y_pos # 1-indexed, using Cartesian coordinates
         self._speed = int(re.search(r"^[0-9]{1,4}", self._category_dict_element["Speed"]).group()) # Capturing the first 1-4 numbers at the beginning of the str
 
         swimming_speed = re.search(r"(?<=swim )[0-9]{1,4}", self._category_dict_element["Speed"])
@@ -210,7 +211,25 @@ class Being:
         else:
             self._condition_immunities = None # NoneType represents no element present
 
-        # TODO: Regex for self._senses
+        if "Senses" in self._category_dict_element.keys():
+            senses_temp = re.findall(r"([A-Z][^\,\n]+)", self._category_dict_element["Senses"])
+            senses_dict = {}
+            for element in senses_temp:
+                sense_name = re.search(r".+(?=\s\d)", element).group()
+                sense_modifier = re.search(r"(?<=[\s\+])[0-9\-]+", element).group()
+                senses_dict[sense_name] = int(sense_modifier) # Skill name is key, skill modifier is val
+            self._senses = senses_dict
+        else:
+            self._senses = None # NoneType represents no element present
+
+        if "Challenge" in self._category_dict_element.keys():
+            challenge_rating = re.search((r"^[0-9\/]+"), self._category_dict_element["Challenge"]).group()
+            challenge_xp = re.search((r"(?<=\()[0-9\,]+"), self._category_dict_element["Challenge"]).group()
+            challenge_xp = challenge_xp.replace(",", "")
+            self._challenge_rating = float(challenge_rating)
+            self._xp = int(challenge_xp)
+        else:
+            self._challenge = None # NoneType represents no element present
 
         # TODO: Determine if key not present in monster json dict means it does not exist in "Being" object, or it exists, but equals None
 
@@ -276,83 +295,42 @@ class Being:
             print("Input not a valid direction!")
             sys.exit(0)
 
-def driver(on = bool): # TODO: Add index/guide for commands
-    user_input = input("Input a battlemap command: ") #TEMP
-    # user_input = "p" #TEMP
-    if user_input == "q" or user_input == "quit":
-        on = False
-        return on
-    elif user_input == "ls" or user_input == "list":
-        pprint.pprint(playlist_dict)
-    else:
-        find_playlist(playlist_dict, user_input, sp) # TODO: Implement is_paused functionality -- don't play playlist if the status is set to paused
-    return on
+def driver(on: bool = True): # TODO: Add index/guide for commands
+    print("Input size of battle map:")
+    x_input = 10 # input("\tInput desired size of x-axis (in 5-foot increments): ") TEMP
+    y_input = 10 # input("\tInput desired size of y-axis (in 5-foot increments): ") TEMP
+    my_battlemap = BattleMap(x_input, y_input)
+
+    command_dict = {
+        "add being": my_battlemap.add_being,
+        "remove being": my_battlemap.remove_being,
+        "move being": my_battlemap.move_being,
+        "DEBUG list": print(repr(my_battlemap))
+    }
+
+    while on:
+        user_input = "add being, ancient red dragon, Smaug, 2, 3" # input("Input a battlemap command: ") #TEMP
+        # user_input = "p" #TEMP
+        user_input = user_input.lower()
+
+        input_split = user_input.split(", ")
+        residual = ", ".join(input_split[1:])
+        # TODO: Refactor this parser into a new function
+
+        command = input_split[0]
+
+
+
+        command_dict[command](residual.split(", "), my_battlemap)
+
+        if user_input == "q" or user_input == "quit":
+            on = False
+            return on
 
 def main():
+    driver()
 
     test_map = BattleMap(10, 10)
-
-    test_being = Being("test_being", "succubus/incubus", 2, 2, test_map)
-
-    test_being_2 = Being("test_being_2", "adult green dragon", 8, 3, test_map)
-
-    test_map.add_being(test_being)
-    
-    test_map.add_being(test_being_2)
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "u", 40) # TEMP
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "r", 40) # TEMP
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "d", 45) # TEMP
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "l", 45) # TEMP
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "u", 45) # TEMP
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "r", 45) # TEMP
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "d", 45) # TEMP
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "ul", 70) # TEMP
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "d", 45) # TEMP
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "ur", 70) # TEMP
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "dl", 36) # TEMP
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "dl", 35) # TEMP
-
-    print(repr(test_map))
-
-    test_map.move_being(test_being, "ur", 8) # TEMP
-
-    print(repr(test_map))
 
     # TODO: Test diagonal movement!
  
@@ -375,8 +353,8 @@ BattleMap:
     * update # Change turns/rounds
     * add_being
     * remove_being
-    * add_env
-    * remove_env
+    * add_object
+    * remove_object
     * empty_location
     * look_at_location
 
@@ -402,11 +380,13 @@ BattleMap:
         * __damage_resistances v/
         * __damage_immunities v/
         *   condition_immunities v/
-        * __senses
-        * __challenge_rating
-        * __experience points
+        * __senses v/
+        * __challenge_rating v/
+        * __experience points v/
         * __spells_known
         * __effects
+        * __traits
+        * __actions
         * __speed v/
         * move
         * 
