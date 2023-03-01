@@ -45,4 +45,6 @@ Guide to the files:
     We plan on including in the overall Cmdnd screen a battlemap and a terminal where you can input commands to manipulate the map, 
     The Spotify playlist integration may not be part of the final program, depending on how hard it is to integrate into the web app.
     
-    Similarly, we plan on setting this up as a web app, but we might do a standard program if a web app is too hard
+    Similarly, we plan on setting this up as a web app, but we might do a standard program if a web app is too hard.
+
+    For Python files, we use Google-style docstrings.

@@ -11,6 +11,21 @@ This is the model in a model-view-controller framework for the RPG battlemap gri
 """
 
 class BattleMap:
+    """ A representation of a battle map consisting of squares.
+
+    Consists of squares, a list of beings contained by the battle
+    map, the combat round, the order of initiative, the current turn, and a
+    dictionary that contains all monsters that can be included on the battlemap.
+
+    Attributes:
+        _max_x = x_squares (int): The x-distance in 5-foot intervals
+        _max_y = y_squares (int): The y-distance in 5-foot intervals
+        _being_list (list): A list of the names of all entities on the battlemap.
+        _grid (numpy array): A 2-dimensional numpy array whose entries represent
+        the tiles of the battle map and their contents.
+
+    
+    """
 
     def __init__(self, x_squares: int, y_squares: int):
         self._max_x = x_squares
@@ -20,7 +35,7 @@ class BattleMap:
         self._round = 0
         self._initiative_order = []
         self._current_turn = None # TODO: Try deleting this when you have "update" function enabled
-        self._creature_dict = srd_list # TODO: Refactor this into another function?
+        self._monster_dict = srd_list # TODO: Refactor this into another function?
         # TODO: Add a list of names to be used on the battle map
 
     def __repr__(self):
@@ -76,7 +91,7 @@ class Being:
         # TODO: Distinguish between being category (Ancient Red Dragon) and being name (Smaug)
         self._name = name # TODO: Make sure name is less than 256 characters!
 
-        for element in battle_map._creature_dict:
+        for element in battle_map._monster_dict:
             if category.lower() == element["name"].lower(): # TEMP
                 self._category = element["name"].lower() # TODO: Add error handling for inputted category not contained within battle map creature dict
                 self._category_dict_element = element

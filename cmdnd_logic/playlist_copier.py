@@ -3,6 +3,11 @@ import sys
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
+"""
+Throwaway file that copies playlists from one user with the prefix RPG:\s and creates those
+playlists under someone else's name.
+"""
+
 # TODO: Mask the name of the user you are copying playlists from using an environment variable!
 
 token = SpotifyOAuth(client_id=os.environ.get("SPOTIPY_SWITCHER_CLIENT_ID"), client_secret=os.environ.get("SPOTIPY_SWITCHER_CLIENT_SECRET"), redirect_uri=os.environ.get("SPOTIPY_REDIRECT_URI"), scope="playlist-modify-public", username=os.environ.get("SPOTIFY_USERNAME"))
@@ -10,7 +15,7 @@ sp = spotipy.Spotify(auth_manager=token)
 
 def main():
     user_id = sp.me()['id']
-    other_user_playlists = sp.user_playlists('OTHER_SPOTIFY_USERNAME')
+    other_user_playlists = sp.user_playlists("OTHER_SPOTIFY_USERNAME")
 
     while other_user_playlists:
         for playlist in other_user_playlists['items']:
