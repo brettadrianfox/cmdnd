@@ -61,21 +61,31 @@ class BattleMap:
         # The grid is 1-indexed, so we subtract 1 from the positions
         # We subtract to_add._y_position from self._max_y because we are converting Cartesian y-coordinates (0 on bottom) to row-major y-coordinates (0 on top)
 
-    def remove_being(self, to_remove: "Being"):
-        self._being_list.remove(to_remove)
-        self._grid[self._max_y - to_remove._y_position, to_remove._x_position - 1] = None
+    def remove_being(self, to_remove):
+        if type(to_remove) is not Being:
+            for being in self._being_list: # TODO: Add error handling for being not found in self._being list!
+                if being._name == to_remove:
+                    being_obj = being
+        else:
+            being_obj = to_remove
+        self._being_list.remove(being_obj)
+        self._grid[self._max_y - being_obj._y_position, being_obj._x_position - 1] = None
         # The grid is 1-indexed, so we subtract 1 from the positions
         # We subtract to_add._y_position from self._max_y because we are converting Cartesian y-coordinates (0 on bottom) to row-major y-coordinates (0 on top)
 
-    def move_being(self, to_move: "Being", direction, magnitude): # TODO: Make moving "through" corners impossible
+    def move_being(self, to_move: str, direction, magnitude): # TODO: Make moving "through" corners impossible
+        magnitude = float(magnitude)
+        for being in self._being_list: # TODO: Add error handling for being not found in self._being list!
+            if being._name == to_move:
+                being_obj = being
         if magnitude < 0:
             print("Magnitude cannot be negative!")
             sys.exit(0)
         else:
             try:
-                self.remove_being(to_move)
-                to_move.move(direction, magnitude)
-                self.add_being(to_move)
+                self.remove_being(being_obj)
+                being_obj.move(direction, magnitude)
+                self.add_being(being_obj)
             except IndexError:
                 print("List wrap-around is invalid for movement!")
                 sys.exit(0)
@@ -97,8 +107,8 @@ class Being:
                 self._category = element["name"].lower() # TODO: Add error handling for inputted category not contained within battle map creature dict
                 self._category_dict_element = element
                 
-        self._x_position = x_pos # 1-indexed, using Cartesian coordinates
-        self._y_position = y_pos # 1-indexed, using Cartesian coordinates
+        self._x_position = int(x_pos) # 1-indexed, using Cartesian coordinates
+        self._y_position = int(y_pos) # 1-indexed, using Cartesian coordinates
         self._speed = int(re.search(r"^[0-9]{1,4}", self._category_dict_element["Speed"]).group()) # Capturing the first 1-4 numbers at the beginning of the str
 
         swimming_speed = re.search(r"(?<=swim )[0-9]{1,4}", self._category_dict_element["Speed"])
@@ -296,44 +306,58 @@ class Being:
             sys.exit(0)
 
 def driver(on: bool = True): # TODO: Add index/guide for commands
-    print("Input size of battle map:")
-    x_input = 10 # input("\tInput desired size of x-axis (in 5-foot increments): ") TEMP
-    y_input = 10 # input("\tInput desired size of y-axis (in 5-foot increments): ") TEMP
-    my_battlemap = BattleMap(x_input, y_input)
+    print('Input size of battle map (press "q" to quit):')
+    x_input = input("Input desired size of x-axis (in feet): ")
+    if x_input == "q" or x_input == "quit":
+        on = False
+        return
+    y_input = input("Input desired size of y-axis (in feet): ")
+    if y_input == "q" or x_input == "quit":
+        on = False
+        return
+    my_battlemap = BattleMap(x_input // 5, y_input // 5) # Everything is rounded to 5-foot "squares"
 
     command_dict = {
         "add being": my_battlemap.add_being,
         "remove being": my_battlemap.remove_being,
-        "move being": my_battlemap.move_being,
-        "DEBUG list": print(repr(my_battlemap))
+        "move being": my_battlemap.move_being
     }
 
     while on:
-        user_input = "add being, ancient red dragon, Smaug, 2, 3" # input("Input a battlemap command: ") #TEMP
+        user_input =  input('Input a battlemap command (type "h" to get help): ') #TEMP
         # user_input = "p" #TEMP
         user_input = user_input.lower()
 
-        input_split = user_input.split(", ")
-        residual = ", ".join(input_split[1:])
-        # TODO: Refactor this parser into a new function
-
-        command = input_split[0]
-
-
-        command_dict[command](residual.split(", "), my_battlemap)
-
         if user_input == "q" or user_input == "quit":
             on = False
-            return on
+            return
+
+        elif user_input == "h" or user_input == "help":
+            print('To add a being to the map: type "add being, [being name], [x-tile], [y-tile]"')
+            print('To move a being around the map: type "move being, [being name], [direction], [distance in feet]')
+            print('To remove a being from the map: type "remove being, [being name]')
+            print('Being names must be unique')
+
+        else:
+            input_split = user_input.split(", ")
+            # TODO: Refactor this parser into a new function
+
+            command = input_split[0]
+
+            if command == "add being":
+                new_being = Being(*input_split[1:], my_battlemap)
+                command_input = new_being
+                command_dict[command](command_input)
+            else:
+                command_input = input_split[1:]
+                command_dict[command](*command_input)
+
+        # TODO: Add a "h / help command that displays formatting about the command line prompt"
+
+        print("\n")
 
 def main():
     driver()
-
-    test_map = BattleMap(10, 10)
-
-    # TODO: Test diagonal movement!
- 
-    print(repr(test_map))
 
 if __name__ == "__main__":
     main()
@@ -350,8 +374,8 @@ BattleMap:
     * __current_turn # Who's turn is it?
     * draw
     * update # Change turns/rounds
-    * add_being
-    * remove_being
+    * add_being v/
+    * remove_being v/
     * add_object
     * remove_object
     * empty_location
