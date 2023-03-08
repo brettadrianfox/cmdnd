@@ -320,7 +320,6 @@ def driver(on: bool = True): # TODO: Add index/guide for commands
         command = input_split[0]
 
 
-
         command_dict[command](residual.split(", "), my_battlemap)
 
         if user_input == "q" or user_input == "quit":
