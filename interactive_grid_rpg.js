@@ -18,6 +18,7 @@ gridWidth.addEventListener("input", function() {
 function createCanvas(event) {
   event.preventDefault();
 
+  table.innerHTML = ''
   for (let h = 1; h <= height; h++) {
     const row = document.createElement('tr');
 
