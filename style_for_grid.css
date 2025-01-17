@@ -1,14 +1,12 @@
-table,
-tr,
-td {
-  border: 1px solid;
+table {
+  border: 1px solid black;
   border-collapse: collapse;
-  ;
 }
 
 td {
   width: 30px;
   height: 30px;
+  overflow: hidden;
 }
 
 h1 {
