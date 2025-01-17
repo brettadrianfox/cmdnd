@@ -1,11 +1,11 @@
-let height = document.getElementById('inputHeight').value;
-let width = document.getElementById('inputWidth').value;
 const gridHeight = document.getElementById('inputHeight');
 const gridWidth = document.getElementById('inputWidth');
+let height = gridHeight.value;
+let width = gridWidth.value;
 const table = document.getElementById('pixelCanvas');
 const form = document.querySelector('form');
-const colorPicker = document.getElementById('colorPicker');
-let color = colorPicker.value;
+const picker = document.getElementById('colorPicker');
+let color = picker.value;
 
 gridHeight.addEventListener("input", function() {
   height = document.getElementById('inputHeight').value;
@@ -32,12 +32,12 @@ function createCanvas(event) {
 
 form.addEventListener('submit', createCanvas);
 
-colorPicker.addEventListener('change', function() {
+picker.onchange = function() {
   color = this.value;
-});
+}
 
 function respondToClick(event) {
-  if (event.target.matches('td')) {
+  if (event.target.nodeName.toLowerCase() === 'td' {
     event.target.style.backgroundColor = color;
   }
 }
